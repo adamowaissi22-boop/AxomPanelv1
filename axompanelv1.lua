@@ -2,10 +2,11 @@ local AxomPanel = {}
 AxomPanel.__index = AxomPanel
 
 function AxomPanel:Create()
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "AxomPanel"
-    ScreenGui.ResetOnSpawn = false
-    ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local selfObj = {}
+    selfObj.Gui = Instance.new("ScreenGui")
+    selfObj.Gui.Name = "AxomPanel"
+    selfObj.Gui.ResetOnSpawn = false
+    selfObj.Gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
@@ -14,7 +15,7 @@ function AxomPanel:Create()
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = true
-    MainFrame.Parent = ScreenGui
+    MainFrame.Parent = selfObj.Gui
 
     local UIStroke = Instance.new("UIStroke")
     UIStroke.Parent = MainFrame
@@ -45,17 +46,15 @@ function AxomPanel:Create()
     CloseButton.Text = "X"
     CloseButton.Parent = TitleBar
     CloseButton.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
+        selfObj.Gui:Destroy()
     end)
 
     local UserInputService = game:GetService("UserInputService")
     local dragging, dragInput, dragStart, startPos
-
     local function update(input)
         local delta = input.Position - dragStart
         MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
-
     MainFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
@@ -68,13 +67,11 @@ function AxomPanel:Create()
             end)
         end
     end)
-
     MainFrame.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             update(input)
@@ -99,70 +96,198 @@ function AxomPanel:Create()
     end
     UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
 
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(0, 350, 0, 50)
-    Button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Button.Font = Enum.Font.SourceSansBold
-    Button.TextSize = 20
-    Button.Text = "Test Button"
-    Button.Parent = ContentFrame
-    Button.MouseButton1Click:Connect(function()
-        print("Button pressed")
-    end)
+    function selfObj:CreateSection(title)
+        local SectionFrame = Instance.new("Frame")
+        SectionFrame.Size = UDim2.new(1, -20, 0, 0)
+        SectionFrame.BackgroundTransparency = 1
+        SectionFrame.Parent = ContentFrame
 
-    local TextBox = Instance.new("TextBox")
-    TextBox.Size = UDim2.new(0, 350, 0, 50)
-    TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TextBox.Font = Enum.Font.SourceSans
-    TextBox.TextSize = 18
-    TextBox.PlaceholderText = "Type something..."
-    TextBox.Parent = ContentFrame
-    TextBox.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            print("TextBox input:", TextBox.Text)
+        local SectionLabel = Instance.new("TextLabel")
+        SectionLabel.Size = UDim2.new(1, 0, 0, 30)
+        SectionLabel.BackgroundTransparency = 1
+        SectionLabel.Text = title
+        SectionLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+        SectionLabel.Font = Enum.Font.SourceSansBold
+        SectionLabel.TextSize = 20
+        SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SectionLabel.Parent = SectionFrame
+
+        local UIList = Instance.new("UIListLayout")
+        UIList.SortOrder = Enum.SortOrder.LayoutOrder
+        UIList.Padding = UDim.new(0, 10)
+        UIList.Parent = SectionFrame
+
+        local section = {}
+
+        function section:CreateButton(text, callback)
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, 0, 0, 40)
+            btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.Font = Enum.Font.SourceSansBold
+            btn.TextSize = 18
+            btn.Text = text
+            btn.Parent = SectionFrame
+            btn.MouseButton1Click:Connect(callback)
         end
-    end)
 
-    local SliderFrame = Instance.new("Frame")
-    SliderFrame.Size = UDim2.new(0, 350, 0, 50)
-    SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    SliderFrame.Parent = ContentFrame
+        function section:CreateTextbox(placeholder, callback)
+            local tb = Instance.new("TextBox")
+            tb.Size = UDim2.new(1, 0, 0, 40)
+            tb.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            tb.TextColor3 = Color3.fromRGB(255, 255, 255)
+            tb.Font = Enum.Font.SourceSans
+            tb.TextSize = 18
+            tb.PlaceholderText = placeholder
+            tb.Parent = SectionFrame
+            tb.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    callback(tb.Text)
+                end
+            end)
+        end
 
-    local SliderValue = Instance.new("TextLabel")
-    SliderValue.Size = UDim2.new(0, 50, 1, 0)
-    SliderValue.Position = UDim2.new(1, -60, 0, 0)
-    SliderValue.BackgroundTransparency = 1
-    SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SliderValue.Font = Enum.Font.SourceSans
-    SliderValue.TextSize = 18
-    SliderValue.Text = "50"
-    SliderValue.Parent = SliderFrame
+        function section:CreateSlider(title, min, max, callback)
+            local SliderFrame = Instance.new("Frame")
+            SliderFrame.Size = UDim2.new(1, 0, 0, 40)
+            SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            SliderFrame.Parent = SectionFrame
 
-    local SliderButton = Instance.new("TextButton")
-    SliderButton.Size = UDim2.new(1, -70, 1, 0)
-    SliderButton.Position = UDim2.new(0, 0, 0, 0)
-    SliderButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    SliderButton.Text = ""
-    SliderButton.Parent = SliderFrame
-    SliderButton.MouseButton1Down:Connect(function()
-        local mouse = game.Players.LocalPlayer:GetMouse()
-        local conn
-        conn = mouse.Move:Connect(function()
-            local relativeX = math.clamp(mouse.X - SliderFrame.AbsolutePosition.X, 0, SliderFrame.AbsoluteSize.X - SliderButton.AbsoluteSize.X)
-            SliderButton.Position = UDim2.new(0, relativeX, 0, 0)
-            local percent = math.floor((relativeX / (SliderFrame.AbsoluteSize.X - SliderButton.AbsoluteSize.X)) * 100)
-            SliderValue.Text = percent
-        end)
-        local upConn
-        upConn = mouse.Button1Up:Connect(function()
-            conn:Disconnect()
-            upConn:Disconnect()
-        end)
-    end)
+            local SliderValue = Instance.new("TextLabel")
+            SliderValue.Size = UDim2.new(0, 50, 1, 0)
+            SliderValue.Position = UDim2.new(1, -60, 0, 0)
+            SliderValue.BackgroundTransparency = 1
+            SliderValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+            SliderValue.Font = Enum.Font.SourceSans
+            SliderValue.TextSize = 18
+            SliderValue.Text = tostring(min)
+            SliderValue.Parent = SliderFrame
 
-    return {Gui = ScreenGui, MainFrame = MainFrame, ContentFrame = ContentFrame}
+            local SliderButton = Instance.new("TextButton")
+            SliderButton.Size = UDim2.new(1, -70, 1, 0)
+            SliderButton.Position = UDim2.new(0, 0, 0, 0)
+            SliderButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+            SliderButton.Text = ""
+            SliderButton.Parent = SliderFrame
+
+            SliderButton.MouseButton1Down:Connect(function()
+                local mouse = game.Players.LocalPlayer:GetMouse()
+                local conn
+                conn = mouse.Move:Connect(function()
+                    local relativeX = math.clamp(mouse.X - SliderFrame.AbsolutePosition.X, 0, SliderFrame.AbsoluteSize.X - SliderButton.AbsoluteSize.X)
+                    SliderButton.Position = UDim2.new(0, relativeX, 0, 0)
+                    local value = math.floor((relativeX / (SliderFrame.AbsoluteSize.X - SliderButton.AbsoluteSize.X)) * (max - min) + min)
+                    SliderValue.Text = tostring(value)
+                    callback(value)
+                end)
+                local upConn
+                upConn = mouse.Button1Up:Connect(function()
+                    conn:Disconnect()
+                    upConn:Disconnect()
+                end)
+            end)
+        end
+
+        function section:CreateToggle(text, callback)
+            local toggle = Instance.new("TextButton")
+            toggle.Size = UDim2.new(1, 0, 0, 40)
+            toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+            toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            toggle.Font = Enum.Font.SourceSansBold
+            toggle.TextSize = 18
+            toggle.Text = text.." : OFF"
+            toggle.Parent = SectionFrame
+            local state = false
+            toggle.MouseButton1Click:Connect(function()
+                state = not state
+                toggle.Text = text.." : "..(state and "ON" or "OFF")
+                callback(state)
+            end)
+        end
+
+        function section:CreatePlayerSelector(title, callback)
+            local Players = game:GetService("Players")
+            local selectedIndex = 1
+            local playerList = {}
+
+            local function updateList()
+                playerList = {}
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p ~= Players.LocalPlayer then
+                        table.insert(playerList, p)
+                    end
+                end
+                if selectedIndex > #playerList then
+                    selectedIndex = #playerList
+                end
+                Label.Text = playerList[selectedIndex] and playerList[selectedIndex].Name or "No Player"
+            end
+
+            updateList()
+            Players.PlayerAdded:Connect(updateList)
+            Players.PlayerRemoving:Connect(updateList)
+
+            local Frame = Instance.new("Frame")
+            Frame.Size = UDim2.new(1, 0, 0, 40)
+            Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Frame.Parent = SectionFrame
+
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -80, 1, 0)
+            Label.Position = UDim2.new(0, 0, 0, 0)
+            Label.BackgroundTransparency = 1
+            Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Label.Font = Enum.Font.SourceSans
+            Label.TextSize = 18
+            Label.Text = playerList[selectedIndex] and playerList[selectedIndex].Name or "No Player"
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = Frame
+
+            local UpButton = Instance.new("TextButton")
+            UpButton.Size = UDim2.new(0, 40, 1, 0)
+            UpButton.Position = UDim2.new(1, -80, 0, 0)
+            UpButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+            UpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            UpButton.Font = Enum.Font.SourceSansBold
+            UpButton.TextSize = 18
+            UpButton.Text = "↑"
+            UpButton.Parent = Frame
+            UpButton.MouseButton1Click:Connect(function()
+                if #playerList == 0 then return end
+                selectedIndex = selectedIndex - 1
+                if selectedIndex < 1 then selectedIndex = #playerList end
+                Label.Text = playerList[selectedIndex].Name
+                callback(playerList[selectedIndex])
+            end)
+
+            local DownButton = Instance.new("TextButton")
+            DownButton.Size = UDim2.new(0, 40, 1, 0)
+            DownButton.Position = UDim2.new(1, -40, 0, 0)
+            DownButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+            DownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            DownButton.Font = Enum.Font.SourceSansBold
+            DownButton.TextSize = 18
+            DownButton.Text = "↓"
+            DownButton.Parent = Frame
+            DownButton.MouseButton1Click:Connect(function()
+                if #playerList == 0 then return end
+                selectedIndex = selectedIndex + 1
+                if selectedIndex > #playerList then selectedIndex = 1 end
+                Label.Text = playerList[selectedIndex].Name
+                callback(playerList[selectedIndex])
+            end)
+        end
+
+        return section
+    end
+
+    return selfObj
+end
+
+function AxomPanel:Toggle()
+    if self.Gui then
+        self.Gui.Enabled = not self.Gui.Enabled
+    end
 end
 
 return AxomPanel
